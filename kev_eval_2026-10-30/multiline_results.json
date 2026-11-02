@@ -1,0 +1,164 @@
+[
+  {
+    "id": "L01",
+    "expected_lines": [
+      null,
+      "banking"
+    ],
+    "raw_prompt": "My bank account details follow.\nAccount number: 8731049521, IFSC HDFC0001234.",
+    "result": {
+      "model": "/Users/app/Desktop/office Projects/IntentGate/models/kev-0.8b/Kev-0.8B-Q8_0.gguf",
+      "selected_intent": null,
+      "status": "review",
+      "intent_scores": {
+        "personal": 0.2332,
+        "banking": 0.4532,
+        "api_key": 0.3552,
+        "gov_id": 0.2371
+      },
+      "lines": [
+        {
+          "line": "My bank account details follow.",
+          "scores": [
+            {
+              "intent": "personal",
+              "probability": 0.2332,
+              "status": "no_match"
+            },
+            {
+              "intent": "banking",
+              "probability": 0.4306,
+              "status": "review"
+            },
+            {
+              "intent": "api_key",
+              "probability": 0.3253,
+              "status": "no_match"
+            },
+            {
+              "intent": "gov_id",
+              "probability": 0.2166,
+              "status": "no_match"
+            }
+          ],
+          "selected_intent": null,
+          "status": "review"
+        },
+        {
+          "line": "Account number: 8731049521, IFSC HDFC0001234.",
+          "scores": [
+            {
+              "intent": "personal",
+              "probability": 0.2269,
+              "status": "no_match"
+            },
+            {
+              "intent": "banking",
+              "probability": 0.4532,
+              "status": "review"
+            },
+            {
+              "intent": "api_key",
+              "probability": 0.3552,
+              "status": "no_match"
+            },
+            {
+              "intent": "gov_id",
+              "probability": 0.2371,
+              "status": "no_match"
+            }
+          ],
+          "selected_intent": null,
+          "status": "review"
+        }
+      ],
+      "questions_asked": 8,
+      "latency_ms": 2027.0,
+      "thresholds": {
+        "low": 0.4,
+        "high": 0.7
+      }
+    }
+  },
+  {
+    "id": "L02",
+    "expected_lines": [
+      "personal",
+      "banking"
+    ],
+    "raw_prompt": "Reach me at maya.rao@aldenmail.net.\nCharge card 4929 1188 7765 0021, expiry 08/29.",
+    "result": {
+      "model": "/Users/app/Desktop/office Projects/IntentGate/models/kev-0.8b/Kev-0.8B-Q8_0.gguf",
+      "selected_intent": null,
+      "status": "review",
+      "intent_scores": {
+        "personal": 0.622,
+        "banking": 0.5724,
+        "api_key": 0.357,
+        "gov_id": 0.1939
+      },
+      "lines": [
+        {
+          "line": "Reach me at maya.rao@aldenmail.net.",
+          "scores": [
+            {
+              "intent": "personal",
+              "probability": 0.622,
+              "status": "review"
+            },
+            {
+              "intent": "banking",
+              "probability": 0.5564,
+              "status": "review"
+            },
+            {
+              "intent": "api_key",
+              "probability": 0.357,
+              "status": "no_match"
+            },
+            {
+              "intent": "gov_id",
+              "probability": 0.1939,
+              "status": "no_match"
+            }
+          ],
+          "selected_intent": null,
+          "status": "review"
+        },
+        {
+          "line": "Charge card 4929 1188 7765 0021, expiry 08/29.",
+          "scores": [
+            {
+              "intent": "personal",
+              "probability": 0.6172,
+              "status": "review"
+            },
+            {
+              "intent": "banking",
+              "probability": 0.5724,
+              "status": "review"
+            },
+            {
+              "intent": "api_key",
+              "probability": 0.3344,
+              "status": "no_match"
+            },
+            {
+              "intent": "gov_id",
+              "probability": 0.1885,
+              "status": "no_match"
+            }
+          ],
+          "selected_intent": null,
+          "status": "review"
+        }
+      ],
+      "questions_asked": 8,
+      "latency_ms": 1847.5,
+      "thresholds": {
+        "low": 0.4,
+        "high": 0.7
+      }
+    }
+  }
+]

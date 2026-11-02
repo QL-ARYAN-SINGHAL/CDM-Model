@@ -1,0 +1,51 @@
+id,category,prompt,expected_intents_smoke,expected_entity_smoke,dual_intents,dual_pii,dual_phi,dual_pci,dual_entities,laya_intents,laya_pii,laya_phi,laya_pci,entity_exact_match
+1,negative,Hi How are you,,,,0.0,0.0,0.0,[],,0.0096,0.0095,0.0096,0
+2,negative,Can you send the report tomorrow?,,,,0.0,0.0,0.0,[],,0.0092,0.0093,0.0091,0
+3,negative,We should review the draft after lunch.,,,,0.0,0.0,0.0,[],,0.0091,0.009,0.0092,0
+4,negative,Please enter your email address here.,,,,0.0,0.0,0.0,[],,0.0093,0.0089,0.0091,0
+5,negative,Do you know your card number?,,,,0.0,0.0,0.0,[],,0.0092,0.0091,0.0096,0
+6,negative,The website says contact us for details.,,,,0.0,0.0,0.0,[],,0.0092,0.0092,0.0091,0
+7,negative,"Name: [REDACTED], SSN: XXX-XX-XXXX",,,,0.0,0.0,0.0,[],,0.0093,0.0091,0.0091,0
+8,negative,My payment card ends in 1234.,,,,0.0,0.0,0.0,[],,0.0095,0.0091,0.0093,0
+9,near_miss,The MAC address format is AA:BB:CC:DD:EE:FF; this is an example.,,,,0.0,0.0,0.0,[],,0.0097,0.0092,0.0096,0
+10,near_miss,A sample routing number might look like 021000021.,,,,0.0,0.0,0.0,[],,0.009,0.0091,0.0093,0
+11,positive,"Send the confirmation email to Sarah's address, which is sarah.thompson92@example.com",PII,EMAIL: sarah.thompson92@example.com,PII,1.0,0.0,0.0,[],PII,0.9892,0.0096,0.0095,0
+12,positive,My name is Sarah Thompson.,PII,NAME: Sarah Thompson,,0.0,0.0,0.0,[],,0.0097,0.0095,0.0095,0
+13,positive,"Deliver to my address: 18 Oak Street, Boston, MA 02116.",PII,"ADDRESS: 18 Oak Street, Boston, MA 02116",PII,1.0,0.0,0.0,[],PII,0.9902,0.0097,0.0096,0
+14,positive,My phone number is +1 415 555 0138.,PII,PHONE: +1 415 555 0138,PII,1.0,0.0,0.0,[],PII,0.9903,0.0095,0.0096,0
+15,positive,Our fax number is +1 212 555 0188.,PII,FAX: +1 212 555 0188,,0.0,0.0,0.0,[],,0.0098,0.0095,0.0096,0
+16,positive,My SSN is 123-45-6789.,PII,SSN: 123-45-6789,PII,1.0,0.0,0.0,[],PII,0.99,0.0096,0.0096,0
+17,positive,My driver's license number is D1234567.,PII,DRIVING_LICENSE: D1234567,PII,1.0,0.0,0.0,[],PII,0.9878,0.0091,0.0091,0
+18,positive,My passport number is K12345678.,PII,PASSPORT_NUMBER: K12345678,PII,0.9999998807907104,0.0,0.0,[],PII,0.9571,0.0091,0.0093,0
+19,positive,My voter ID is ABC1234567.,PII,VOTER_ID: ABC1234567,,1.2636184692382812e-05,0.0,0.0,[],PII,0.9861,0.0092,0.0093,0
+20,positive,My password is Summer2026!x.,PII,PASSWORD: Summer2026!x,PII,1.0,0.0,0.0,[],,0.0096,0.0092,0.0094,0
+21,positive,My username is sarah_t92.,PII,USERNAME: sarah_t92,PII,1.0,0.0,0.0,[],PII,0.9901,0.0096,0.0096,0
+22,positive,My PAN number is ABCDE1234F.,PII,PAN_NUMBER: ABCDE1234F,PII,1.0,0.0,0.0,[],PII,0.9897,0.0096,0.0097,0
+23,positive,My Aadhaar number is 2345 6789 0123.,PII,AADHAAR_NUMBER: 2345 6789 0123,PII,1.0,0.0,0.0,[],PII,0.99,0.0097,0.0098,0
+24,positive,My Canadian social insurance number is 046 454 286.,PII,CA_SOCIAL_INSURANCE_NUMBER: 046 454 286,PII,1.0,0.0,0.0,[],PII,0.9901,0.0097,0.0097,0
+25,positive,My UK national insurance number is QQ 12 34 56 C.,PII,UK_NATIONAL_INSURANCE_NUMBER: QQ 12 34 56 C,PII,1.0,0.0,0.0,[],PII,0.9901,0.0097,0.0096,0
+26,positive,My ITIN is 912-70-1234.,PII,US_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER: 912-70-1234,PII,1.0,0.0,0.0,[],PII,0.9902,0.0097,0.0096,0
+27,positive,My device IP address is 192.168.1.25.,PII,IP_ADDRESS: 192.168.1.25,PII,1.0,0.0,0.0,[],PII,0.9901,0.0096,0.0097,0
+28,positive,My laptop MAC address is 3C:22:FB:11:22:33.,PII,MAC_ADDRESS: 3C:22:FB:11:22:33,PII,1.0,0.0,0.0,[],PII,0.9894,0.0097,0.0097,0
+29,positive,My AWS access key ID is AKIAIOSFODNN7EXAMPLE.,PII,AWS_ACCESS_KEY: AKIAIOSFODNN7EXAMPLE,PII,1.0,0.0,0.0,[],,0.0232,0.0096,0.0097,0
+30,positive,My car license plate is 7ABC123.,PII,LICENSE_PLATE: 7ABC123,PII,0.9999988079071045,0.0,0.0,[],PII,0.9888,0.0094,0.0094,0
+31,positive,My car VIN is 1HGCM82633A004352.,PII,VEHICLE_IDENTIFICATION_NUMBER: 1HGCM82633A004352,PII,1.0,0.0,0.0,[],PII,0.9902,0.0097,0.0096,0
+32,positive,My professional license number is RN123456.,PII,CERTIFICATE_LICENSE_NUMBER: RN123456,,0.35457170009613037,0.0,0.0,[],PII,0.9894,0.0093,0.0091,0
+33,positive,My profile link is https://example.com/users/sarah92.,PII,URL: https://example.com/users/sarah92,PII,1.0,0.0,0.0,"[{""type"": ""URL"", ""text"": ""https://example.com/users/sarah92."", ""score"": 0.9989, ""start"": 19, ""end"": 53}]",PII,0.9903,0.0095,0.0095,0
+34,messy,hey um my email's sarah.thompson92@example.com pls reply there,PII,EMAIL: sarah.thompson92@example.com,PII,1.0,0.0,0.0,[],PII,0.9904,0.0094,0.0095,0
+35,messy,can u txt me on +1 415 555 0138 thx,PII,PHONE: +1 415 555 0138,,0.0,0.0,0.0,[],,0.0098,0.0096,0.0096,0
+36,positive,My medical record number is MRN-12345678.,PHI,MEDICAL_RECORD_NUMBER: MRN-12345678,PHI,0.0,1.0,0.0,"[{""type"": ""MEDICAL_RECORD_NUMBER"", ""text"": ""MRN-12345678"", ""score"": 1.0, ""start"": 28, ""end"": 40}]",PHI,0.0095,0.9901,0.0095,1
+37,positive,My Canadian health card number is 1234-567-890-AB.,PHI,CA_HEALTH_NUMBER: 1234-567-890-AB,PHI,1.1920928955078125e-07,1.0,0.0,"[{""type"": ""CA_HEALTH_NUMBER"", ""text"": ""1234-567-890-AB"", ""score"": 1.0, ""start"": 34, ""end"": 49}]",PHI,0.0099,0.9905,0.0096,1
+38,positive,My health plan beneficiary number is H123456789.,PHI,HEALTH_PLAN_BENEFICIARY_NUMBER: H123456789,,0.0,3.4570693969726562e-06,0.0,"[{""type"": ""HEALTH_PLAN_BENEFICIARY_NUMBER"", ""text"": ""H123456789"", ""score"": 0.9999, ""start"": 37, ""end"": 47}]",,0.0094,0.0099,0.0091,1
+39,positive,My NHS number is 943 476 5919.,PHI,UK_NATIONAL_HEALTH_SERVICE_NUMBER: 943 476 5919,PHI,0.0,1.0,0.0,"[{""type"": ""UK_NATIONAL_HEALTH_SERVICE_NUMBER"", ""text"": ""943 476 5919"", ""score"": 1.0, ""start"": 17, ""end"": 29}]",PHI,0.0098,0.9904,0.0096,1
+40,positive,My card number is 4111 1111 1111 1111.,PCI,CARD_NUMBER: 4111 1111 1111 1111,,0.0,0.0,0.0,[],,0.0096,0.0095,0.0096,0
+41,positive,My card CVV is 123.,PCI,CVV: 123,,0.0,0.0,5.960464477539062e-07,[],,0.0095,0.0092,0.0095,0
+42,positive,My card expiry date is 12/29.,PCI,CARD_EXPIRY: 12/29,,0.0,0.0,0.0,[],,0.0094,0.0094,0.0092,0
+43,positive,My bank account number is 123456789012.,PCI,ACCOUNT_NUMBER: 123456789012,,0.0,0.0,0.0,[],,0.0096,0.0092,0.0095,0
+44,positive,My US bank routing number is 021000021.,PCI,US_ROUTING_NO: 021000021,,0.0,0.0,0.0,[],,0.0097,0.0094,0.0102,0
+45,positive,My UPI ID is sarah@okaxis.,PCI,UPI_ID: sarah@okaxis,PCI,0.0,0.0,1.0,"[{""type"": ""UPI_ID"", ""text"": ""sarah@okaxis"", ""score"": 1.0, ""start"": 13, ""end"": 25}]",PII;PCI,0.9882,0.0097,0.9902,1
+46,positive,My IFSC code is HDFC0001234.,PCI,IFSC_CODE: HDFC0001234,PCI,0.0,0.0,0.9999992847442627,"[{""type"": ""IFSC_CODE"", ""text"": ""HDFC0001234"", ""score"": 1.0, ""start"": 16, ""end"": 27}]",PCI,0.0111,0.0097,0.9894,1
+47,positive,My UTR number is 1234567890123456.,PCI,UTR_NUMBER: 1234567890123456,,0.0,0.0,0.0,[],,0.0134,0.0093,0.0099,0
+48,positive,My SWIFT code is CHASUS33XXX.,PCI,SWIFT_CODE: CHASUS33XXX,PCI,0.0,0.0,0.999903678894043,"[{""type"": ""SWIFT_CODE"", ""text"": ""CHASUS33XXX"", ""score"": 0.9999, ""start"": 17, ""end"": 28}]",PCI,0.0113,0.0096,0.9902,1
+49,positive,My wallet ID is wallet_123456789.,PCI,WALLET_ID: wallet_123456789,,0.0,0.0,0.0,"[{""type"": ""WALLET_ID"", ""text"": ""wallet_123456789"", ""score"": 0.9747, ""start"": 16, ""end"": 32}]",,0.0212,0.0093,0.0142,1
+50,messy,uh my card is 4111 1111 1111 1111 pls use it,PCI,CARD_NUMBER: 4111 1111 1111 1111,,0.0,0.0,8.344650268554688e-07,[],,0.0098,0.0093,0.0095,0

@@ -1,0 +1,21 @@
+{
+ "model": "fastino/gliner2-base-v1",
+ "architecture": "span",
+ "max_len": null,
+ "val": {
+  "source": "dual_val.jsonl",
+  "rows": 1500,
+  "kept": 1500,
+  "dropped": 0,
+  "drop_reasons": {},
+  "labels_per_example_p50": 16
+ },
+ "train": {
+  "source": "dual_train_100.jsonl",
+  "rows": 91333,
+  "kept": 91333,
+  "dropped": 0,
+  "drop_reasons": {},
+  "labels_per_example_p50": 16
+ }
+}

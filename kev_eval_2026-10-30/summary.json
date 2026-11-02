@@ -1,0 +1,63 @@
+{
+  "model": "/Users/app/Desktop/office Projects/IntentGate/models/kev-0.8b/Kev-0.8B-Q8_0.gguf",
+  "low": 0.4,
+  "high": 0.7,
+  "questions": [
+    {
+      "name": "personal",
+      "description": "Does this line disclose a person's name, email address, phone number, or postal address?",
+      "do": "Line contains an actual person's name, email, phone, or address value, including a clear continuation from a nearby line.",
+      "dont": "Only a field label, generic discussion, masked value, placeholder, or fictional example; no actual personal value is disclosed."
+    },
+    {
+      "name": "banking",
+      "description": "Does this line disclose a payment card number, CVV, expiry, or bank account value?",
+      "do": "Line contains an actual card, CVV, expiry, or bank account value, including a clear continuation from a nearby line.",
+      "dont": "Only banking discussion, a field label, masked value, placeholder, or fictional example; no actual banking value is disclosed."
+    },
+    {
+      "name": "api_key",
+      "description": "Does this line disclose an API key, secret token, password, or private key value?",
+      "do": "Line contains an actual secret value such as an API key, token, password, or private key.",
+      "dont": "Only a variable name, instruction, masked value, placeholder, or generic secret discussion; no actual secret value is disclosed."
+    },
+    {
+      "name": "gov_id",
+      "description": "Does this line disclose a driver's licence, Aadhaar, or PAN identifier value?",
+      "do": "Line contains an actual government identifier value, including a clear continuation from a nearby line.",
+      "dont": "Only a document name, application question, masked value, placeholder, or fictional example; no actual identifier value is disclosed."
+    }
+  ],
+  "category_counts": {
+    "positive": {
+      "exact": 6,
+      "total": 10,
+      "matches": 6,
+      "reviews": 3
+    },
+    "negative": {
+      "exact": 10,
+      "total": 10,
+      "matches": 0,
+      "reviews": 0
+    },
+    "near_miss": {
+      "exact": 5,
+      "total": 10,
+      "matches": 1,
+      "reviews": 4
+    }
+  },
+  "errors": [],
+  "failures": [
+    "P02",
+    "P03",
+    "P05",
+    "P06",
+    "M05",
+    "M06",
+    "M07",
+    "M08",
+    "M10"
+  ]
+}
