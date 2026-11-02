@@ -17,3 +17,5 @@ best/
 *.jsonl
 *.docx
 *.pdf
+
+models/kev/
