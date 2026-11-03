@@ -1,10 +1,11 @@
-"""Public Verity and Kev tester: allow inference, not saved tracker data."""
+"""Public Verity and KnowLine tester: allow inference, not saved tracker data."""
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import ProxyHandler, Request, build_opener
 import json
+import os
 import re
 
 
@@ -33,12 +34,12 @@ class Handler(BaseHTTPRequestHandler):
                 flags=re.S,
             )
             return self.reply(200, page.encode(), "text/html; charset=utf-8")
-        if self.path in ("/health", "/kev/health"):
+        if self.path in ("/health", "/knowline/health"):
             try:
                 with OPENER.open(UPSTREAM + self.path, timeout=10) as response:
                     health = json.load(response)
-                public = ({"ready": health.get("ready"), "model": "Kev 0.8B"}
-                          if self.path == "/kev/health" else
+                public = ({"ready": health.get("ready"), "model": "KnowLine 4B"}
+                          if self.path == "/knowline/health" else
                           {"status": health.get("status"), "model_loaded": health.get("model_loaded"),
                            "model_name": health.get("model_name")})
                 return self.reply(200, json.dumps(public).encode(), "application/json")
@@ -47,7 +48,7 @@ class Handler(BaseHTTPRequestHandler):
         return self.reply(404, b'{"detail":"Not found"}', "application/json")
 
     def do_POST(self):
-        if self.path not in ("/predict", "/kev/scan"):
+        if self.path not in ("/predict", "/knowline/scan"):
             return self.reply(404, b'{"detail":"Not found"}', "application/json")
         try:
             size = int(self.headers.get("Content-Length", "0"))
@@ -58,7 +59,7 @@ class Handler(BaseHTTPRequestHandler):
         body = self.rfile.read(size)
         try:
             req = Request(UPSTREAM + self.path, data=body, headers={"Content-Type": "application/json"})
-            with OPENER.open(req, timeout=180 if self.path == "/kev/scan" else 120) as response:
+            with OPENER.open(req, timeout=180 if self.path == "/knowline/scan" else 120) as response:
                 return self.reply(response.status, response.read(), "application/json")
         except HTTPError as error:
             return self.reply(error.code, error.read(), "application/json")
@@ -67,4 +68,4 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    ThreadingHTTPServer(("127.0.0.1", 8001), Handler).serve_forever()
+    ThreadingHTTPServer(("127.0.0.1", int(os.environ.get("PROXY_PORT", "8001"))), Handler).serve_forever()

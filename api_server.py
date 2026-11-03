@@ -42,8 +42,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-from kev_bridge import TRACKING_CSV as KEV_TRACKING_CSV, TRACKING_COLUMNS as KEV_TRACKING_COLUMNS, tracking_lock as kev_tracking_lock, router as kev_router
-app.include_router(kev_router)
+from knowline_bridge import TRACKING_CSV as KNOWLINE_TRACKING_CSV, TRACKING_COLUMNS as KNOWLINE_TRACKING_COLUMNS, tracking_lock as knowline_tracking_lock, router as knowline_router
+app.include_router(knowline_router)
 lock = threading.Lock()
 tracking_lock = threading.Lock()
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -209,13 +209,13 @@ def load_tracking_rows():
                 verity_records = list(csv.DictReader(file))
         else:
             verity_records = []
-    with kev_tracking_lock:
-        if KEV_TRACKING_CSV.exists():
-            with KEV_TRACKING_CSV.open(newline="", encoding="utf-8") as file:
-                kev_records = list(csv.DictReader(file))
+    with knowline_tracking_lock:
+        if KNOWLINE_TRACKING_CSV.exists():
+            with KNOWLINE_TRACKING_CSV.open(newline="", encoding="utf-8") as file:
+                knowline_records = list(csv.DictReader(file))
         else:
-            kev_records = []
-    return verity_records, kev_records
+            knowline_records = []
+    return verity_records, knowline_records
 
 
 def spreadsheet_text(value):
@@ -225,19 +225,19 @@ def spreadsheet_text(value):
 
 @app.get("/tracking.xlsx")
 def tracking_workbook():
-    verity_records, kev_records = load_tracking_rows()
+    verity_records, knowline_records = load_tracking_rows()
     workbook = Workbook(write_only=True)
     verity_sheet = workbook.create_sheet("Fine-tuned Verity")
     verity_sheet.append(TRACKING_COLUMNS)
     for record in verity_records:
         verity_sheet.append([spreadsheet_text(record.get(column)) for column in TRACKING_COLUMNS])
-    kev_columns = ["tracking_id", "timestamp_utc", "model", "raw_prompt", "intent_names",
+    knowline_columns = ["tracking_id", "timestamp_utc", "model", "raw_prompt", "intent_names",
                    "descriptions", "do_criteria", "dont_criteria", "questions_json",
                    "selected_intent", "status", "intent_scores", "lines", "questions_asked",
                    "latency_ms", "low_threshold", "high_threshold"]
-    kev_sheet = workbook.create_sheet("Kev 0.8B")
-    kev_sheet.append(kev_columns)
-    for record in kev_records:
+    knowline_sheet = workbook.create_sheet("KnowLine 4B")
+    knowline_sheet.append(knowline_columns)
+    for record in knowline_records:
         try:
             questions = json.loads(record.get("questions") or "[]")
             if not isinstance(questions, list):
@@ -249,7 +249,7 @@ def tracking_workbook():
         for column, key in (("intent_names", "name"), ("descriptions", "description"),
                             ("do_criteria", "do"), ("dont_criteria", "dont")):
             values[column] = json.dumps([question.get(key, "") for question in questions if isinstance(question, dict)], ensure_ascii=False)
-        kev_sheet.append([spreadsheet_text(values.get(column)) for column in kev_columns])
+        knowline_sheet.append([spreadsheet_text(values.get(column)) for column in knowline_columns])
     output = BytesIO()
     workbook.save(output)
     output.seek(0)
@@ -260,21 +260,21 @@ def tracking_workbook():
 
 @app.get("/tracker", response_class=HTMLResponse)
 def tracker():
-    verity_records, kev_records = load_tracking_rows()
+    verity_records, knowline_records = load_tracking_rows()
     records = [(record.get("timestamp_utc") or "", "verity", record) for record in verity_records]
-    records.extend((record.get("timestamp_utc") or "", "kev", record) for record in kev_records)
+    records.extend((record.get("timestamp_utc") or "", "knowline", record) for record in knowline_records)
     records.sort(key=lambda item: item[0], reverse=True)
     rows = []
     for _, kind, record in records:
-        prompt = html.escape(record.get("raw_prompt" if kind == "kev" else "prompt") or "")
-        columns = KEV_TRACKING_COLUMNS if kind == "kev" else TRACKING_COLUMNS
+        prompt = html.escape(record.get("raw_prompt" if kind == "knowline" else "prompt") or "")
+        columns = KNOWLINE_TRACKING_COLUMNS if kind == "knowline" else TRACKING_COLUMNS
         fields = "".join(
             f"<dt>{html.escape(column.replace('_', ' ').title())}</dt>"
             f"<dd>{html.escape(record.get(column) or '')}</dd>"
             for column in columns
         )
-        if kind == "kev":
-            model_name = "Kev 0.8B"
+        if kind == "knowline":
+            model_name = "KnowLine 4B"
             mode = "intent questions"
             category = ""
             decision = (record.get("selected_intent") or "None") + " · " + (record.get("status") or "")
@@ -297,7 +297,7 @@ def tracker():
     page = (ROOT / "verity_tracker.html").read_text(encoding="utf-8")
     page = page.replace("<!--TRACKER_ROWS-->", "\n".join(rows))
     page = page.replace("<!--VERITY_COUNT-->", str(len(verity_records)))
-    page = page.replace("<!--KEV_COUNT-->", str(len(kev_records)))
+    page = page.replace("<!--KNOWLINE_COUNT-->", str(len(knowline_records)))
     return HTMLResponse(page, headers={"Cache-Control": "no-store"})
 
 

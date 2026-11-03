@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verity + KnowLine · Live tracker</title>
+<style>
+:root{color-scheme:dark;--bg:#0d1420;--panel:#131d2c;--line:#2a394d;--text:#edf2fa;--muted:#a7b5ca;--accent:#acc9ff;--ok:#6fd6a0;--warn:#f2c76e;--bad:#f2857e;font-family:"Avenir Next",Avenir,"Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text)}
+header{border-bottom:1px solid var(--line);padding:18px 24px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+header h1{font-size:20px;margin:0;font-weight:700}header .live{margin-left:auto;color:var(--muted);font-size:13px;display:flex;align-items:center;gap:8px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--ok);display:inline-block}.dot.off{background:var(--bad)}
+main{max-width:1200px;margin:auto;padding:24px 16px 60px}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tabs button{padding:10px 16px;border-radius:8px;border:1px solid var(--line);background:#1b2a3d;color:var(--text);font:inherit;font-weight:600;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--accent);color:#0d1420;border-color:var(--accent)}
+.bar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+input[type=search]{flex:1;min-width:220px;padding:11px 14px;background:#101925;border:1px solid var(--line);border-radius:8px;color:var(--text);font:inherit}
+a.btn,button.btn{padding:10px 14px;border-radius:8px;border:1px solid var(--line);background:#1b2a3d;color:var(--accent);font:inherit;text-decoration:none;cursor:pointer}
+.meta{color:var(--muted);font-size:13px;margin:6px 0 14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px}
+.head{display:flex;gap:10px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:12px;margin-bottom:10px}
+.prompt{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;font-size:14px;max-height:5.6em;overflow:hidden;position:relative}
+.prompt.open{max-height:none}.more{background:none;border:0;color:var(--accent);padding:6px 0;font:inherit;font-size:13px;cursor:pointer}
+.label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{padding:3px 10px;border-radius:99px;font-size:12px;border:1px solid var(--line);background:#1b2a3d}
+.chip.ok{border-color:var(--ok);color:var(--ok)}.chip.warn{border-color:var(--warn);color:var(--warn)}.chip.bad{border-color:var(--bad);color:var(--bad)}
+.score{display:grid;grid-template-columns:90px 1fr 56px;gap:10px;align-items:center;font-size:12px;margin:4px 0}
+.track{height:7px;background:#1b2a3d;border-radius:4px;overflow:hidden}.fill{height:100%;background:var(--accent)}
+.ent{font-size:13px;margin:3px 0;overflow-wrap:anywhere}.ent b{color:var(--accent);font-weight:600}
+.line{border-left:2px solid var(--line);padding:4px 0 4px 10px;margin:6px 0;font-size:13px;overflow-wrap:anywhere}
+details summary{cursor:pointer;color:var(--accent);font-size:13px;margin-top:12px}
+dl{display:grid;grid-template-columns:150px 1fr;gap:6px 12px;font-size:12px;margin:10px 0 0}dt{color:var(--muted)}dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.empty{color:var(--muted);padding:40px;text-align:center}
+@media(max-width:600px){dl{grid-template-columns:1fr}.score{grid-template-columns:70px 1fr 50px}}
+</style>
+</head>
+<body>
+<header><h1>Model tracker</h1><div class="live"><span class="dot" id="dot"></span><span id="status">Connecting…</span></div></header>
+<main>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-verity" aria-selected="true">Fine-tuned Verity (<span id="n-verity">0</span>)</button>
+    <button role="tab" id="tab-knowline" aria-selected="false">KnowLine 4B (<span id="n-knowline">0</span>)</button>
+  </div>
+  <div class="bar">
+    <input id="q" type="search" placeholder="Search prompt, intent, entity, status…" autocomplete="off">
+    <a class="btn" id="csv" href="/download/verity.csv">Download CSV</a>
+  </div>
+  <div class="meta" id="meta"></div>
+  <div id="list"></div>
+  <div style="text-align:center"><button class="btn" id="moreBtn" hidden>Load more</button></div>
+</main>
+<script>
+const PAGE = 50, REFRESH_MS = 5000;
+const state = {tab: 'verity', data: {verity: [], knowline: []}, shown: PAGE, q: '', lastKey: {}, failed: false};
+const $ = id => document.getElementById(id);
+
+function el(tag, cls, text) {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+function parse(value) { try { return JSON.parse(value); } catch { return null; } }
+function pct(n) { return (Number(n) * 100).toFixed(1) + '%'; }
+function when(ts) { const d = new Date(ts); return isNaN(d) ? ts : d.toLocaleString(); }
+function chip(text, kind) { return el('span', 'chip' + (kind ? ' ' + kind : ''), text); }
+
+function scoreBars(scores) {
+  const box = el('div');
+  Object.entries(scores || {}).forEach(([name, value]) => {
+    const row = el('div', 'score');
+    row.append(el('span', '', name));
+    const track = el('div', 'track'), fill = el('div', 'fill');
+    fill.style.width = Math.max(0, Math.min(100, value * 100)) + '%';
+    track.append(fill);
+    row.append(track, el('span', '', pct(value)));
+    box.append(row);
+  });
+  return box;
+}
+
+function allFields(row) {
+  const det = el('details'), sum = el('summary', '', 'All fields');
+  const dl = el('dl');
+  Object.entries(row).forEach(([k, v]) => { dl.append(el('dt', '', k), el('dd', '', v)); });
+  det.append(sum, dl);
+  return det;
+}
+
+function promptBlock(text) {
+  const wrap = el('div'), p = el('div', 'prompt', text);
+  wrap.append(p);
+  if (text.length > 220 || text.split('\n').length > 4) {
+    const b = el('button', 'more', 'Show full prompt');
+    b.onclick = () => { p.classList.toggle('open'); b.textContent = p.classList.contains('open') ? 'Show less' : 'Show full prompt'; };
+    wrap.append(b);
+  }
+  return wrap;
+}
+
+function verityCard(row) {
+  const card = el('div', 'card'), head = el('div', 'head');
+  head.append(el('span', '', when(row.timestamp_utc)), el('span', '', 'mode: ' + row.mode), el('span', '', row.latency_ms + ' ms'));
+  if (row.category) head.append(el('span', '', row.category));
+  card.append(head, promptBlock(row.prompt || ''));
+  const intents = parse(row.predicted_intents) || [];
+  card.append(el('div', 'label', 'Predicted intents'));
+  const chips = el('div', 'chips');
+  if (intents.length) intents.forEach(i => chips.append(chip(i, 'ok'))); else chips.append(chip('None', ''));
+  card.append(chips);
+  const scores = parse(row.intent_scores);
+  if (scores) { card.append(el('div', 'label', 'Intent scores'), scoreBars(scores)); }
+  const ents = parse(row.gated_entities) || [];
+  card.append(el('div', 'label', 'Entities (' + ents.length + ')'));
+  if (!ents.length) card.append(el('div', 'ent', row.mode === 'classify' ? 'Not requested (classify mode)' : 'None found'));
+  ents.forEach(e => {
+    const line = el('div', 'ent'); line.append(el('b', '', e.type), document.createTextNode('  ' + e.text + '   (' + pct(e.score) + ')'));
+    card.append(line);
+  });
+  const raw = parse(row.raw_entities) || [];
+  if (raw.length > ents.length) card.append(el('div', 'ent', raw.length - ents.length + ' raw candidate(s) suppressed by intent gating'));
+  if (row.expected_intents || row.expected_entities) {
+    card.append(el('div', 'label', 'Expected'), el('div', 'ent', [row.expected_intents, row.expected_entities].filter(Boolean).join('   ')));
+  }
+  card.append(allFields(row));
+  return card;
+}
+
+function knowlineCard(row) {
+  const card = el('div', 'card'), head = el('div', 'head');
+  head.append(el('span', '', when(row.timestamp_utc)), el('span', '', row.latency_ms + ' ms'),
+              el('span', '', 'thresholds ' + row.low_threshold + ' / ' + row.high_threshold),
+              el('span', '', row.questions_asked + ' question×line pairs'));
+  card.append(head, promptBlock(row.raw_prompt || ''));
+  card.append(el('div', 'label', 'Selected intent'));
+  const chips = el('div', 'chips'), status = row.status || '';
+  chips.append(chip(row.selected_intent || 'None', row.selected_intent ? 'ok' : ''),
+               chip(status, status === 'match' ? 'ok' : status === 'review' ? 'warn' : ''));
+  card.append(chips);
+  const scores = parse(row.intent_scores);
+  if (scores) card.append(el('div', 'label', 'Intent scores (best line)'), scoreBars(scores));
+  const lines = parse(row.lines) || [];
+  if (lines.length) {
+    card.append(el('div', 'label', 'Per-line decisions'));
+    lines.forEach(l => {
+      const box = el('div', 'line');
+      box.append(el('div', '', l.line));
+      const c = el('div', 'chips'); c.style.marginTop = '4px';
+      (l.scores || []).forEach(s => c.append(chip(s.intent + ' ' + pct(s.probability) + ' · ' + s.status,
+        s.status === 'match' ? 'ok' : s.status === 'review' ? 'warn' : '')));
+      box.append(c); card.append(box);
+    });
+  }
+  const qs = parse(row.questions) || [];
+  if (qs.length) {
+    const det = el('details'); det.append(el('summary', '', 'Questions asked (' + qs.length + ')'));
+    const dl = el('dl');
+    qs.forEach(q => dl.append(el('dt', '', q.name), el('dd', '', 'Description: ' + q.description + '\nDo: ' + q.do + "\nDon't: " + q.dont)));
+    det.append(dl); card.append(det);
+  }
+  card.append(allFields(row));
+  return card;
+}
+
+function matches(row, q) { return !q || Object.values(row).some(v => String(v).toLowerCase().includes(q)); }
+
+function render() {
+  const rows = state.data[state.tab].filter(r => matches(r, state.q));
+  const list = $('list'); list.replaceChildren();
+  if (!rows.length) list.append(el('div', 'empty', state.q ? 'No rows match your search.' : 'No prompts logged yet.'));
+  rows.slice(0, state.shown).forEach(r => list.append(state.tab === 'verity' ? verityCard(r) : knowlineCard(r)));
+  $('moreBtn').hidden = rows.length <= state.shown;
+  $('meta').textContent = 'Showing ' + Math.min(rows.length, state.shown) + ' of ' + rows.length + ' · newest first';
+  $('n-verity').textContent = state.data.verity.length; $('n-knowline').textContent = state.data.knowline.length;
+}
+
+async function load(model) {
+  const res = await fetch('/api/data?model=' + model, {cache: 'no-store'});
+  if (res.status === 401) { location.reload(); return; }
+  if (!res.ok) throw new Error(res.status);
+  const body = await res.json();
+  const first = body.rows[0];
+  const key = body.count + '|' + (first ? first.tracking_id : '');
+  if (key !== state.lastKey[model]) { state.lastKey[model] = key; state.data[model] = body.rows; return true; }
+  return false;
+}
+
+async function refresh() {
+  try {
+    const changed = (await Promise.all([load('verity'), load('knowline')])).some(Boolean);
+    if (changed) render();
+    state.failed = false; $('dot').className = 'dot';
+    $('status').textContent = 'Live · updated ' + new Date().toLocaleTimeString();
+  } catch (e) { $('dot').className = 'dot off'; $('status').textContent = 'Connection lost · retrying'; }
+}
+
+function setTab(tab) {
+  state.tab = tab; state.shown = PAGE;
+  ['verity', 'knowline'].forEach(t => $('tab-' + t).setAttribute('aria-selected', String(t === tab)));
+  $('csv').href = '/download/' + tab + '.csv'; render();
+}
+$('tab-verity').onclick = () => setTab('verity');
+$('tab-knowline').onclick = () => setTab('knowline');
+$('q').oninput = e => { state.q = e.target.value.trim().toLowerCase(); state.shown = PAGE; render(); };
+$('moreBtn').onclick = () => { state.shown += PAGE; render(); };
+refresh(); setInterval(refresh, REFRESH_MS);
+</script>
+</body>
+</html>

@@ -14,11 +14,11 @@ fi
 if ! venv/bin/python -c 'import gliner2, fastapi, uvicorn, torch' >/dev/null 2>&1; then
   venv/bin/python -m pip install -r requirements.txt
 fi
-./ensure_kev.sh >> kev_server.log 2>&1 &
-KEV_PID=$!
+./ensure_knowline.sh >> knowline_server.log 2>&1 &
+KNOWLINE_PID=$!
 cleanup() {
-  kill "$KEV_PID" 2>/dev/null || true
-  wait "$KEV_PID" 2>/dev/null || true
+  kill "$KNOWLINE_PID" 2>/dev/null || true
+  wait "$KNOWLINE_PID" 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM
 echo "Verity: http://127.0.0.1:8000/"

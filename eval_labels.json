@@ -1,0 +1,22 @@
+{
+  "Book a flight to Delhi tomorrow.": true,
+  "Hey Bank How are you": false,
+  "Hey Team , as my order went back": true,
+  "Hey how are you": false,
+  "Hey manager , can u get me a note of rupee 10": false,
+  "qwedeasdqwdasdad": false,
+  "Hi How are you": false,
+  "hey buddy, summarize the P&L document": false,
+  "IBM reported higher revenue this quarter": true,
+  "IBM's consulting division generated": true,
+  "IBM has $12 billion in cash": false,
+  "Compare IBM's actual revenue, EBITDA": true,
+  "Explain how active SONAR": true,
+  "Compare passive and active SONAR for military": true,
+  "Research modern naval SONAR": true,
+  "1. Describe the architecture of a defense SONAR": true,
+  "Compare active and passive acoustic sensing for marine biology": false,
+  "What are the main signal-processing techniques used in underwater acoustic communication systems for civilian": false,
+  "1. Describe how autonomous underwater vehicles use acoustic sensors": false,
+  "Explain how radar is used in air traffic control": false
+}

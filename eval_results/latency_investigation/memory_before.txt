@@ -1,0 +1,36 @@
+== memory_pressure
+Swapins: 4988921 
+Swapouts: 7148205 
+Pageins: 6029556 
+Pageouts: 54012 
+System-wide memory free percentage: 62%
+== vm_stat
+Mach Virtual Memory Statistics: (page size of 16384 bytes)
+Pages free:                               35422.
+Pages active:                            472032.
+Pages inactive:                          435425.
+Pages speculative:                        18259.
+Pages throttled:                              0.
+Pages wired down:                        167125.
+Pages purgeable:                           5740.
+"Translation faults":                 139345651.
+Pages copy-on-write:                    5289948.
+Pages zero filled:                    114306403.
+Pages reactivated:                     26241839.
+Pages purged:                           3714422.
+File-backed pages:                       384520.
+Anonymous pages:                         541196.
+Pages stored in compressor:             1935710.
+== top RSS
+   3245 MB  pid 1743   /System/Library/Frameworks/Virtualization.framework/Versions/A/XPCServices/com.apple.Virtualizati
+    571 MB  pid 1042   /Applications/Claude.app/Contents/Frameworks/Claude
+    443 MB  pid 14384  /Users/apple/exo/.venv/bin/python3
+    333 MB  pid 4997   /Users/apple/Library/Application
+    198 MB  pid 767    /Applications/Claude.app/Contents/MacOS/Claude
+    134 MB  pid 1464   /Users/apple/exo/.venv/bin/python3
+    128 MB  pid 1705   /Applications/Docker.app/Contents/MacOS/com.docker.backend
+    104 MB  pid 16038  /Applications/Claude.app/Contents/Frameworks/Claude
+     86 MB  pid 16039  /Applications/Claude.app/Contents/Frameworks/Claude
+     71 MB  pid 736    /System/Applications/Utilities/Activity
+     70 MB  pid 20927  /opt/homebrew/Cellar/python@3.14/3.14.8/Frameworks/Python.framework/Versions/3.14/Resources/Pytho
+     68 MB  pid 1732   /Applications/Docker.app/Contents/MacOS/Docker

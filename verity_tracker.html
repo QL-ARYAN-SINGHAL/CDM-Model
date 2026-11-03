@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Verity + Kev · Shared tracker</title>
+  <title>Verity + KnowLine · Shared tracker</title>
   <style>
     :root{font-family:"Avenir Next",Avenir,"Segoe UI",sans-serif;color:#edf2fa;background:#0d1420}
     *{box-sizing:border-box}body{margin:0}header{border-bottom:1px solid #2a394d;padding:22px max(24px,calc((100vw - 1360px)/2));font-size:24px;font-weight:700}
@@ -31,9 +31,9 @@
   <header>Model tracker</header>
   <main>
     <h1>Shared tracker</h1>
-    <p>Separate model views. Kev details include intent names, descriptions, Do/Don’t, scores, and line decisions. Newest first.</p>
-    <nav><a href="/">Back to model tester</a><a href="/tracking.xlsx" download>Download workbook · both sheets</a><a href="/tracking.csv" download>Verity CSV</a><a href="/kev/tracking.csv" download>Kev CSV</a><button type="button" id="refresh">Refresh now</button></nav>
-    <div class="model-tabs" role="tablist" aria-label="Tracker model"><button type="button" id="verityTab" role="tab" aria-selected="true">Fine-tuned Verity (<!--VERITY_COUNT-->)</button><button type="button" id="kevTab" role="tab" aria-selected="false">Kev 0.8B (<!--KEV_COUNT-->)</button></div>
+    <p>Separate model views. KnowLine details include intent names, descriptions, Do/Don’t, scores, and line decisions. Newest first.</p>
+    <nav><a href="/">Back to model tester</a><a href="/tracking.xlsx" download>Download workbook · both sheets</a><a href="/tracking.csv" download>Verity CSV</a><a href="/knowline/tracking.csv" download>KnowLine CSV</a><button type="button" id="refresh">Refresh now</button></nav>
+    <div class="model-tabs" role="tablist" aria-label="Tracker model"><button type="button" id="verityTab" role="tab" aria-selected="true">Fine-tuned Verity (<!--VERITY_COUNT-->)</button><button type="button" id="knowlineTab" role="tab" aria-selected="false">KnowLine 4B (<!--KNOWLINE_COUNT-->)</button></div>
     <label for="search">Search all fields</label>
     <input id="search" type="search" placeholder="Prompt, entity, intent, category…" autocomplete="off">
     <div class="meta" id="count"></div>
@@ -44,10 +44,10 @@
   </main>
   <script>
     const search=document.getElementById('search'), rows=[...document.querySelectorAll('#rows tr')], count=document.getElementById('count');
-    const tabs={verity:document.getElementById('verityTab'),kev:document.getElementById('kevTab')};
-    let active=location.hash==='#kev'?'kev':'verity';
+    const tabs={verity:document.getElementById('verityTab'),knowline:document.getElementById('knowlineTab')};
+    let active=location.hash==='#knowline'?'knowline':'verity';
     document.getElementById('refresh').addEventListener('click',()=>location.reload());
-    function filterRows(){const query=search.value.trim().toLocaleLowerCase();let shown=0,total=0;for(const row of rows){if(row.dataset.model===active)total++;const match=row.dataset.model===active&&(!query||row.textContent.toLocaleLowerCase().includes(query));row.hidden=!match;if(match)shown++;}count.textContent=`${shown} of ${total} ${active==='kev'?'Kev':'Verity'} rows`;for(const [name,tab] of Object.entries(tabs))tab.setAttribute('aria-selected',String(name===active));}
+    function filterRows(){const query=search.value.trim().toLocaleLowerCase();let shown=0,total=0;for(const row of rows){if(row.dataset.model===active)total++;const match=row.dataset.model===active&&(!query||row.textContent.toLocaleLowerCase().includes(query));row.hidden=!match;if(match)shown++;}count.textContent=`${shown} of ${total} ${active==='knowline'?'KnowLine':'Verity'} rows`;for(const [name,tab] of Object.entries(tabs))tab.setAttribute('aria-selected',String(name===active));}
     for(const [name,tab] of Object.entries(tabs))tab.addEventListener('click',()=>{active=name;location.hash=name;search.value='';filterRows();});
     search.addEventListener('input',filterRows);
     filterRows();

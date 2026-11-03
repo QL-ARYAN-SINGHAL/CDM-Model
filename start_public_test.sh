@@ -2,6 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
+PROXY_PORT="${PROXY_PORT:-8001}"
+export PROXY_PORT
 cd "$ROOT"
 
 if ! command -v cloudflared >/dev/null 2>&1; then
@@ -12,8 +14,8 @@ if lsof -nP -iTCP:8000 -sTCP:LISTEN >/dev/null 2>&1; then
   echo "Port 8000 is already in use. Stop the existing Verity server, then retry." >&2
   exit 1
 fi
-if lsof -nP -iTCP:8001 -sTCP:LISTEN >/dev/null 2>&1; then
-  echo "Port 8001 is already in use. Stop the existing public proxy, then retry." >&2
+if lsof -nP -iTCP:${PROXY_PORT} -sTCP:LISTEN >/dev/null 2>&1; then
+  echo "Port ${PROXY_PORT} is already in use. Stop the existing public proxy, then retry." >&2
   exit 1
 fi
 if [ ! -x venv/bin/python ]; then
@@ -28,8 +30,8 @@ if [ ! -f "$VERITY_MODEL_PATH/model.safetensors" ]; then
   exit 1
 fi
 
-./ensure_kev.sh >> kev_server.log 2>&1 &
-KEV_PID=$!
+./ensure_knowline.sh >> knowline_server.log 2>&1 &
+KNOWLINE_PID=$!
 
 venv/bin/python api_server.py >> verity_server.log 2>&1 &
 API_PID=$!
@@ -40,8 +42,8 @@ cleanup() {
   wait "$PROXY_PID" 2>/dev/null || true
   kill "$API_PID" 2>/dev/null || true
   wait "$API_PID" 2>/dev/null || true
-  kill "$KEV_PID" 2>/dev/null || true
-  wait "$KEV_PID" 2>/dev/null || true
+  kill "$KNOWLINE_PID" 2>/dev/null || true
+  wait "$KNOWLINE_PID" 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM
 
@@ -64,4 +66,4 @@ fi
 
 echo "Verity is loaded. Open the tunnel URL to start testing."
 echo "Keep this process running; stop it with Ctrl-C to close the public tunnel."
-cloudflared tunnel --url http://127.0.0.1:8001
+cloudflared tunnel --url http://127.0.0.1:${PROXY_PORT}

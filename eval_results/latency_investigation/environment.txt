@@ -1,0 +1,21 @@
+== hardware
+Apple M4 Pro
+cores(physical/logical): 12/12  perf/eff: 8/4
+RAM: 24 GiB
+      Chipset Model: Apple M4 Pro
+      Total Number of Cores: 16
+      Metal Support: Metal 4
+ProductName:		macOS ProductVersion:		26.4.1 BuildVersion:		25E253 
+vm.swapusage: total = 19456.00M  used = 18402.94M  free = 1053.06M  (encrypted)
+Note: No thermal warning level has been recorded
+Note: No performance warning level has been recorded
+Note: No CPU power status has been recorded
+== engine
+version: 0.8.0 (build 11960, commit 8642541b2)
+built with AppleClang 21.0.0.21000334 for Darwin arm64
+== production process
+ 5696 03:10:22 /opt/homebrew/bin/llama-server -m /Users/apple/Quantization Model/CDM-Model/models/knowline/KnowLine-4B-Gen5.5.Q5_K_M.gguf --host 127.0.0.1 --port 8009 -c 8192 -np 1 -b 2048 -ub 2048
+== /props
+{'total_slots': 1, 'model_path': '/Users/apple/Quantization Model/CDM-Model/models/knowline/KnowLine-4B-Gen5.5.Q5_K_M.gguf', 'modalities': {'vision': False, 'video': False, 'audio': False}} n_ctx 8192
+== /slots
+1 slot(s); fields: ['id', 'id_task', 'is_processing', 'n_ctx', 'n_prompt_tokens', 'n_prompt_tokens_cache', 'n_prompt_tokens_processed', 'next_token', 'params', 'speculative'] is_processing False
