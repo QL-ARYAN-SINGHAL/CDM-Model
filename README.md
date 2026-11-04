@@ -35,7 +35,7 @@ Runtime logs, environment files, access keys, virtualenvs, caches, and raw JSONL
 
 ## Model files
 
-Verity checkpoint is under `models/verity/best` (Git LFS). KnowLine's GGUF is `models/knowline/KnowLine-2B-Gen1.Q8_0.gguf` (about 2 GB, not committed; convert `PelaAI/KnowLine-2B-Gen1` with llama.cpp's `convert_hf_to_gguf.py` and `llama-quantize ... Q8_0`). Its prompt layout and tokenizer are vendored in `knowline_src/` (Apache-2.0, from `PelaAI/KnowLine-4B-Gen5.5`). Override paths with `VERITY_MODEL_PATH` and `KNOWLINE_MODEL_PATH`.
+Verity checkpoint is under `models/verity/best`; it is NOT in git or in the models release, copy it from your machine. KnowLine's GGUF is `models/knowline/KnowLine-2B-Gen1.Q8_0.gguf` (about 2 GB, not committed; convert `PelaAI/KnowLine-2B-Gen1` with llama.cpp's `convert_hf_to_gguf.py` and `llama-quantize ... Q8_0`). Its prompt layout and tokenizer are vendored in `knowline_src/` (Apache-2.0, from `PelaAI/KnowLine-4B-Gen5.5`). Override paths with `VERITY_MODEL_PATH` and `KNOWLINE_MODEL_PATH`.
 
 KnowLine runs on stock `llama-server`, but not through its `/v1/systemone` route: `knowline_bridge.py` renders KnowLine's own prompt and reads the probability of its two answer labels from `/completion`. Strategy (measured with `benchmark_knowline.py`; sets built by `build_benchmark_sets.py`):
 
