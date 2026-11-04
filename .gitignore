@@ -22,3 +22,10 @@ models/knowline/
 models/candidates/
 eval_results_*.log
 eval_*.server.log
+
+# models are distributed as GitHub Release assets (see scripts/download_models.sh), not committed
+models/aurelis/
+models/knowline/
+*.gguf
+knowline_tracking.csv
+knowline_eval/results/*.server.log

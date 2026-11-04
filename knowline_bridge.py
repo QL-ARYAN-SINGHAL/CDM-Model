@@ -1,6 +1,6 @@
-"""KnowLine-4B intent-question routes. Verity inference is independent.
+"""KnowLine-2B intent-question routes. Verity inference is independent.
 
-KnowLine-4B-Gen5.5 (Q5_K_M GGUF) runs on llama-server. Each line x question pair is rendered with KnowLine's published
+KnowLine-2B-Gen1 (Q8_0 GGUF) runs on llama-server. Each line x question pair is rendered with KnowLine's published
 prompt layout (knowline_src/, read twice) and answered from the next-token probabilities of its two option labels;
 nothing is generated. P(true) of the question is the score.
 """
@@ -16,6 +16,7 @@ import urllib.request
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
@@ -23,14 +24,19 @@ from pydantic import BaseModel, Field, model_validator
 
 ROOT = Path(__file__).resolve().parent
 router = APIRouter(prefix="/knowline")
-KNOWLINE_URL = os.environ.get("KNOWLINE_URL", f"http://127.0.0.1:{os.environ.get('KNOWLINE_PORT', '8009')}").rstrip("/")
-KNOWLINE_MODEL_PATH = Path(os.environ.get(
-    "KNOWLINE_MODEL_PATH", str(ROOT / "models" / "knowline" / "KnowLine-4B-Gen5.5.Q5_K_M.gguf")))
+# KnowLine 2B (Gen1, Q8_0 GGUF) on llama-server. It shares knowline_src's tokenizer and chat layout (read-twice is a
+# Gen5.5-only layout, so it stays off). The 4B Gen5.5 build was dropped: 2B scored 96.0% vs 98.2% at about a third of the latency.
+MODELS = {
+    "2b": {"url": os.environ.get("KNOWLINE_URL", f"http://127.0.0.1:{os.environ.get('KNOWLINE_PORT', '8009')}").rstrip("/"),
+           "path": Path(os.environ.get("KNOWLINE_MODEL_PATH", str(ROOT / "models" / "knowline" / "KnowLine-2B-Gen1.Q8_0.gguf")))},
+}
+KNOWLINE_URL = MODELS["2b"]["url"]
+KNOWLINE_MODEL_PATH = MODELS["2b"]["path"]
 # Serving strategy, from benchmark_knowline.py runs: the whole message is judged once per intent (one model pass per intent,
 # so the time does not grow with the number of lines). The input is read once (99.8% on 500 short prompts, ~0.4 s; 96.5% on
 # 40 big prompts with 5 intents, ~5 s). KNOWLINE_BIG_READ_TWICE=1 reads prompts of BIG_WORDS words or more twice: 98.5%, ~10 s.
 READ_TWICE = os.environ.get("KNOWLINE_READ_TWICE", "0") == "1"       # short prompts: KnowLine Gen5.5 read-twice layout
-USE_CACHE = os.environ.get("KNOWLINE_CACHE", "0") == "1"             # llama-server prompt cache (measured: no gain on this model)
+USE_CACHE = os.environ.get("KNOWLINE_CACHE", "1") == "1"             # llama-server prompt cache; with -ub 64 + checkpoints: -42% latency, identical decisions (2B, 100-prompt suite)
 BIG_WORDS = int(os.environ.get("KNOWLINE_BIG_WORDS", "150"))         # prompts this long use BIG_READ_TWICE
 BIG_READ_TWICE = os.environ.get("KNOWLINE_BIG_READ_TWICE", "0") == "1"  # 1: read long prompts twice (+2 points, about 2x the time)
 _lock = threading.Lock()
@@ -39,7 +45,7 @@ TRACKING_CSV = ROOT / "knowline_tracking.csv"
 TRACKING_COLUMNS = ["tracking_id", "timestamp_utc", "model", "raw_prompt", "questions",
                     "selected_intent", "status", "intent_scores", "lines", "questions_asked",
                     "latency_ms", "low_threshold", "high_threshold"]
-_scorer = None
+_scorers = {}
 _scorer_lock = threading.Lock()
 
 
@@ -81,6 +87,7 @@ class Question(BaseModel):
 class ScanRequest(BaseModel):
     raw_prompt: str = Field(min_length=1, max_length=10000)
     questions: list[Question] = Field(min_length=1, max_length=16)
+    model: Literal["2b"] = "2b"
     low: float = Field(default=0.4, ge=0, le=1)
     high: float = Field(default=0.7, ge=0, le=1)
 
@@ -93,10 +100,10 @@ class ScanRequest(BaseModel):
         return self
 
 
-def _request(path: str, body: dict | None = None, timeout: float = 10) -> dict:
+def _request(path: str, body: dict | None = None, timeout: float = 10, base: str = KNOWLINE_URL) -> dict:
     payload = None if body is None else json.dumps(body).encode("utf-8")
     req = urllib.request.Request(
-        KNOWLINE_URL + path, data=payload,
+        base + path, data=payload,
         headers={"Content-Type": "application/json"} if payload else {},
     )
     try:
@@ -106,20 +113,22 @@ def _request(path: str, body: dict | None = None, timeout: float = 10) -> dict:
         raise HTTPException(503, f"KnowLine server unavailable: {exc}") from exc
 
 
-def _loaded_model() -> str:
-    models = _request("/v1/models").get("data", [])
-    expected = KNOWLINE_MODEL_PATH.name
+def _loaded_model(key: str = "2b") -> str:
+    cfg = MODELS[key]
+    models = _request("/v1/models", base=cfg["url"]).get("data", [])
+    expected = cfg["path"].name
     for item in models:
         model_id = item.get("id", "")
         if Path(model_id).name == expected:
             return model_id
-    raise HTTPException(503, f"KnowLine-4B checkpoint not loaded at {KNOWLINE_URL}")
+    raise HTTPException(503, f"KnowLine-{key.upper()} checkpoint not loaded at {cfg['url']}")
 
 
 class _Scorer:
     """KnowLine's prompt layout (read twice) plus the label-token readout, on top of llama-server /completion."""
 
-    def __init__(self, read_twice: bool = READ_TWICE, cache: bool = USE_CACHE):
+    def __init__(self, base: str = KNOWLINE_URL, read_twice: bool = READ_TWICE, cache: bool = USE_CACHE):
+        self.base = base
         sys.path.insert(0, str(ROOT / "knowline_src"))
         from transformers import AutoTokenizer
         import knowline_server as ks
@@ -140,7 +149,7 @@ class _Scorer:
         token_ids = self.tok.encode(text, add_special_tokens=False)
         wanted = self.label_ids[:len(keys)]
         data = _request("/completion", {"prompt": token_ids, "n_predict": 1, "temperature": 0, "n_probs": 200,
-                                        "cache_prompt": self.cache}, timeout=180)
+                                        "cache_prompt": self.cache}, timeout=180, base=self.base)
         try:
             top = data["completion_probabilities"][0]["top_logprobs"]
         except (KeyError, IndexError, TypeError) as exc:
@@ -154,12 +163,11 @@ class _Scorer:
         return dict(zip(keys, (w / sum(weights) for w in weights)))["true"]
 
 
-def _get_scorer() -> _Scorer:
-    global _scorer
+def _get_scorer(key: str = "2b") -> _Scorer:
     with _scorer_lock:
-        if _scorer is None:
-            _scorer = _Scorer()
-        return _scorer
+        if key not in _scorers:
+            _scorers[key] = _Scorer(base=MODELS[key]["url"])
+        return _scorers[key]
 
 
 def choose_read_twice(raw_prompt: str) -> bool:
@@ -187,9 +195,9 @@ def compute_scan(scorer, raw_prompt, questions, low, high, read_twice=None):
 
 
 @router.get("/health")
-def health():
+def health(model: Literal["2b"] = "2b"):
     try:
-        model_id = _loaded_model()
+        model_id = _loaded_model(model)
         return {"ready": True, "model": model_id}
     except HTTPException as exc:
         return {"ready": False, "error": exc.detail}
@@ -197,11 +205,11 @@ def health():
 
 @router.post("/scan")
 def scan(req: ScanRequest):
-    model_id = _loaded_model()
+    model_id = _loaded_model(req.model)
     if not req.raw_prompt.strip():
         raise HTTPException(422, "raw_prompt must contain text")
-    twice = choose_read_twice(req.raw_prompt)
-    scorer = _get_scorer()
+    twice = False  # read-twice is a Gen5.5-only layout; the 2B is Gen1
+    scorer = _get_scorer(req.model)
     started = time.perf_counter()
     with _lock:
         line_results, max_by_intent = compute_scan(scorer, req.raw_prompt, req.questions, req.low, req.high,

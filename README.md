@@ -1,9 +1,12 @@
 # CDM-Model
 
+> **Architecture, request flow, serving flags, benchmark results and how to download the models: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).**
+> Models are GitHub Release assets: `scripts/download_models.sh`.
+
 Portable local POC for testing two intent systems:
 
 - **Fine-tuned Verity V4**: intent classification plus entity extraction.
-- **KnowLine 4B** (KnowLine-4B-Gen5.5, Q5_K_M GGUF): dynamic typed intent questions with description, Do, Don't, raw prompt, thresholds, and per-line scores.
+- **KnowLine 2B** (KnowLine-2B-Gen1, Q8_0 GGUF, 1.9 GB): dynamic typed intent questions with description, Do, Don't, raw prompt, thresholds, and per-line scores.
 
 ## Run locally
 
@@ -32,7 +35,7 @@ Runtime logs, environment files, access keys, virtualenvs, caches, and raw JSONL
 
 ## Model files
 
-Verity checkpoint is under `models/verity/best` (Git LFS). KnowLine's GGUF is `models/knowline/KnowLine-4B-Gen5.5.Q5_K_M.gguf` (about 3.2 GB, not committed; download it from `mradermacher/KnowLine-4B-Gen5.5-GGUF`). Its prompt layout and tokenizer are vendored in `knowline_src/` (Apache-2.0, from `PelaAI/KnowLine-4B-Gen5.5`). Override paths with `VERITY_MODEL_PATH` and `KNOWLINE_MODEL_PATH`.
+Verity checkpoint is under `models/verity/best` (Git LFS). KnowLine's GGUF is `models/knowline/KnowLine-2B-Gen1.Q8_0.gguf` (about 2 GB, not committed; convert `PelaAI/KnowLine-2B-Gen1` with llama.cpp's `convert_hf_to_gguf.py` and `llama-quantize ... Q8_0`). Its prompt layout and tokenizer are vendored in `knowline_src/` (Apache-2.0, from `PelaAI/KnowLine-4B-Gen5.5`). Override paths with `VERITY_MODEL_PATH` and `KNOWLINE_MODEL_PATH`.
 
 KnowLine runs on stock `llama-server`, but not through its `/v1/systemone` route: `knowline_bridge.py` renders KnowLine's own prompt and reads the probability of its two answer labels from `/completion`. Strategy (measured with `benchmark_knowline.py`; sets built by `build_benchmark_sets.py`):
 
@@ -42,3 +45,9 @@ KnowLine runs on stock `llama-server`, but not through its `/v1/systemone` route
 - Switches: `KNOWLINE_READ_TWICE`, `KNOWLINE_BIG_WORDS`, `KNOWLINE_BIG_READ_TWICE`, `KNOWLINE_CACHE`. The result has one entry for the whole message instead of one per line.
 
 Its decision quality is not guaranteed for every domain; calibrate thresholds on reviewed positive, negative, and near-miss prompts.
+
+## KnowLine 2B serving settings (measured, `knowline_eval/`)
+
+- Question schema: description as the question + **Do** (true) + **Don't** (false) criteria. On the 100-prompt suite (329 decisions) it scored 96.0% vs 93.6% (question only) and 93.0% (Do only); folding Do/Don't into the question text gave the same accuracy (96.4%, p=1.0) but 40% more latency.
+- llama-server flags: `-c 8192 -np 1 -b 2048 -ub 64 --checkpoint-min-step 0 --ctx-checkpoints 32` plus `KNOWLINE_CACHE=1` (default). Mean latency per 3-4 intent prompt 1.59 s -> 0.9 s, identical decisions. `-ub 128` gives 1.1-1.25 s, `-ub 32` 1.74 s, `-ub 16` 2.56 s. Keep one request at a time on the single slot.
+- Match threshold: scores are better separated at about 0.8 than at 0.5 (98.2% vs 96.0% on the suite).

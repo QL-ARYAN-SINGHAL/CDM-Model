@@ -235,7 +235,7 @@ def tracking_workbook():
                    "descriptions", "do_criteria", "dont_criteria", "questions_json",
                    "selected_intent", "status", "intent_scores", "lines", "questions_asked",
                    "latency_ms", "low_threshold", "high_threshold"]
-    knowline_sheet = workbook.create_sheet("KnowLine 4B")
+    knowline_sheet = workbook.create_sheet("KnowLine 2B")
     knowline_sheet.append(knowline_columns)
     for record in knowline_records:
         try:
@@ -274,7 +274,7 @@ def tracker():
             for column in columns
         )
         if kind == "knowline":
-            model_name = "KnowLine 4B"
+            model_name = "KnowLine 2B"
             mode = "intent questions"
             category = ""
             decision = (record.get("selected_intent") or "None") + " · " + (record.get("status") or "")
