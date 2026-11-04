@@ -31,6 +31,7 @@ TRACKING_COLUMNS = ["tracking_id", "timestamp_utc", "session_id", "category", "m
 LOG_RESULTS = os.environ.get("VERITY_LOG_RESULTS", "false").lower() == "true"
 sys.path.insert(0, str(ROOT / "gliner2_spike"))
 import common
+import postfilter
 
 INTENT_THRESHOLD = 0.5  # Evaluation default; all three raw scores are returned.
 EXTRACTION_THRESHOLD = 0.5  # Same threshold and all-label schema as training evaluation.
@@ -87,6 +88,13 @@ def predict_one(text: str, mode: str) -> dict:
     intents = [kind.upper() for kind in common.FAMILIES if scores is not None and scores[kind] >= INTENT_THRESHOLD]
     top = max(intents, key=lambda kind: scores[kind.lower()]) if intents else ("None" if scores is not None else None)
     gated_entities = [e for e in raw_entities if common.family_open(e["type"], family_flags)]
+    internal_intents = [f.upper() for f in common.FAMILIES if family_flags[f]]
+    gated_entities, internal_intents, pf_dropped = postfilter.apply(text, gated_entities, internal_intents)   # drops values that break the digit/letter/format rules
+    if postfilter.ENABLED:
+        if mode in ("extract", "both"): entities = list(gated_entities)
+        if scores is not None:
+            intents = [i for i in intents if i in internal_intents]
+            top = max(intents, key=lambda kind: scores[kind.lower()]) if intents else "None"
     return {"text": text, "mode": mode, "intent": top,
             "intent_score": round(scores[top.lower()], 6) if top not in (None, "None") else None,
             "intents": intents, "intent_scores": {k.upper(): float(v) for k, v in scores.items()} if scores is not None else None,
@@ -98,7 +106,8 @@ def predict_one(text: str, mode: str) -> dict:
             "extraction_threshold": EXTRACTION_THRESHOLD,
             "_audit_raw_entities": raw_entities,
             "_audit_gated_entities": gated_entities,
-            "_audit_intents": [f.upper() for f in common.FAMILIES if internal_scores[f] >= INTENT_THRESHOLD],
+            "postfilter": {"enabled": postfilter.ENABLED, "dropped": [{"type": d["type"], "text": d["text"], "reason": d["reason"]} for d in pf_dropped]},
+            "_audit_intents": internal_intents,
             "_audit_intent_scores": {f.upper(): float(v) for f, v in internal_scores.items()}}
 
 
