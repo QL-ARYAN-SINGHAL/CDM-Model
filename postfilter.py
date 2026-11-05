@@ -3,7 +3,7 @@ the filter removed the last real value of that family. Messy separators (spaces,
   layer 1 (always): digit-only entities must not contain letters; NAME must not contain digits.
   layer 2 (STRICT_TYPES): length / format rules from the approved pattern sheet (value_rules.py), checked on the value with separators removed.
 Switch off with VERITY_POSTFILTER=0. Aadhaar accepts 12 digits (first digit 2-9) and, if AADHAAR_ALLOW_16=1 (default), 16-digit groups (Virtual ID)."""
-import os, re
+import os, re, ipaddress
 import value_rules as R
 
 ENABLED = os.environ.get("VERITY_POSTFILTER", "1") != "0"
@@ -38,6 +38,34 @@ STRICT = {
  "SWIFT_CODE": lambda v: R.v_swift(COMPACT(v)), "INTERNATIONAL_BANK_ACCOUNT_NUMBER": lambda v: R.v_iban(NOWS(v)), "VEHICLE_IDENTIFICATION_NUMBER": lambda v: R.v_vin(NOWS(v)),
  "MAC_ADDRESS": lambda v: R.v_mac(NOWS(v)), "IN_NREGA": lambda v: R.v_nrega(NOWS(v)), "CA_HEALTH_NUMBER": lambda v: R.v_cahn(" ".join(v.split()))}
 
+# LOOSE: entities with no national standard. Two checks on the value with separators removed: (1) length range, (2) character kind.
+LOOSE_ON = os.environ.get("VERITY_LOOSE", "1") != "0"
+CLEAN = lambda s: re.sub(r"[\s\-–—_/.]", "", s)
+def _rng(lo, hi, kind):
+    """kind: 'digits' | 'mixed' (letters and digits) | 'hasdigit' (digits, or letters and digits)"""
+    def f(v):
+        c = CLEAN(v)
+        if not lo <= len(c) <= hi or not re.fullmatch(r"[A-Za-z0-9]+", c): return False
+        has_d, has_l = bool(re.search(r"\d", c)), bool(re.search(r"[A-Za-z]", c))
+        return {"digits": has_d and not has_l, "mixed": has_d and has_l, "hasdigit": has_d}[kind]
+    return f
+def _ip(v):
+    try: ipaddress.ip_address(v.strip().strip("[]")); return True
+    except ValueError: return False
+def _date(v):
+    s = re.sub(r"[ T]\d{1,2}:\s?\d{2}.*$", "", v.strip())     # drop a trailing time of day
+    return R.v_date(s) or R.v_date(s.replace("-", " ")) or bool(re.fullmatch(r"\d{6,8}", CLEAN(s))) or bool(re.fullmatch(r"(?i)(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? \d{4}", s))
+def _age(v):
+    m = re.fullmatch(r"(\d{1,2})([\s\-]*[A-Za-z/ \-]{1,20})?", v.strip()); return bool(m) and int(m.group(1)) >= 1
+LOOSE = {
+ "HEALTH_PLAN_BENEFICIARY_NUMBER": _rng(8, 16, "hasdigit"), "MEDICAL_RECORD_NUMBER": _rng(5, 14, "hasdigit"), "WALLET_ID": _rng(8, 16, "hasdigit"),
+ "CERTIFICATE_LICENSE_NUMBER": _rng(6, 16, "mixed"), "DEVICE_IDENTIFIER": _rng(6, 20, "hasdigit"), "UTR_NUMBER": lambda v: R.v_utr(CLEAN(v)),
+ "PASSPORT_NUMBER": _rng(8, 9, "hasdigit"), "DRIVING_LICENSE": _rng(6, 16, "hasdigit"), "LICENSE_PLATE": _rng(5, 12, "hasdigit"),
+ "CARD_EXPIRY": lambda v: R.v_expiry(v) or (bool(re.fullmatch(r"\d{4}|\d{6}", CLEAN(v))) and 1 <= int(CLEAN(v)[:2]) <= 12) or (bool(re.fullmatch(r"([1-9])\s?[/-]\s?(\d{2}|\d{4})", v.strip()))) or bool(re.fullmatch(r"(?i)(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[ \-/]*(\d{2}|\d{4})", v.strip())),
+ "DATE": _date, "AGE": _age, "USERNAME": lambda v: bool(re.fullmatch(r"@?[A-Za-z0-9._\-]{4,22}", v.strip())), "PASSWORD": lambda v: 5 <= len(v.strip()) <= 31,
+ "ADDRESS": lambda v: 10 <= len(v.strip()) <= 100 and " " in v.strip() and bool(re.search(r"\d", v)) and bool(re.search(r"[A-Za-z]", v)),
+ "IP_ADDRESS": _ip, "URL": lambda v: R.v_url(v.strip())}
+
 def _trim(text, e):
     """cut trailing/leading sentence punctuation and non-Latin letters glued to the span (e.g. '4829 1567 9034이고'); returns a new entity dict"""
     s, t = e["start"], e["text"]; a, b = 0, len(t)
@@ -52,6 +80,7 @@ def check(etype, value):
         if not re.search(r"\d", value): return "no digits"
     if etype in ALPHA_ONLY and re.search(r"\d", value): return "digits in a name"
     if etype in STRICT and not STRICT[etype](value): return "breaks the format rule"
+    if LOOSE_ON and etype in LOOSE and not LOOSE[etype](value): return "breaks the length / character rule"
     return None
 
 def apply(text, entities, intents):
@@ -59,7 +88,7 @@ def apply(text, entities, intents):
     if not ENABLED: return entities, list(intents), []
     kept, dropped = [], []
     for e in entities:
-        e2 = _trim(text, e) if e["type"] in DIGIT_ONLY | set(STRICT) | ALPHA_ONLY else e
+        e2 = _trim(text, e) if e["type"] in DIGIT_ONLY | set(STRICT) | ALPHA_ONLY | (set(LOOSE) - {"PASSWORD"} if LOOSE_ON else set()) else e
         why = check(e2["type"], e2["text"])
         (dropped if why else kept).append({**e2, "reason": why} if why else e2)
     new_intents = list(intents)

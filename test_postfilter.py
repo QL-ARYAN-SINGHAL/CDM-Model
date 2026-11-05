@@ -10,11 +10,16 @@ KEEP = [("AADHAAR_NUMBER", "2345 6789 0123"), ("AADHAAR_NUMBER", "2345 - 6789 - 
 DROP = [("AADHAAR_NUMBER", "asdnjkkjnda"), ("AADHAAR_NUMBER", "83839das"), ("AADHAAR_NUMBER", "2345678901"), ("AADHAAR_NUMBER", "2345 6789 012"), ("AADHAAR_NUMBER", "0123 4567 8901"), ("CVV", "12"), ("CVV", "12345"),
         ("CVV", "12a"), ("PAN_NUMBER", "ABCPD1234EXTRA"), ("PAN_NUMBER", "ABCPD12345"), ("PAN_NUMBER", "asdnjkkjnda"), ("PAN_NUMBER", "ABCDE2132F"), ("PHONE", "asdnjkkjnda"), ("PHONE", "98765abcde"), ("EMAIL", "asdnjkkjnda"),
         ("EMAIL", "name@gmail"), ("UPI_ID", "Suny@Aryan"), ("UPI_ID", "asdnjkkjnda"), ("CARD_NUMBER", "asdnjkkjnda"), ("ACCOUNT_NUMBER", "asdnjkkjnda"), ("SSN", "666-12-3456"), ("NAME", "Rahul123"), ("IFSC_CODE", "HDFC1001234")]
+KEEP += [("HEALTH_PLAN_BENEFICIARY_NUMBER", "HBP-53052011"), ("HEALTH_PLAN_BENEFICIARY_NUMBER", "HBP 5305\n2011"), ("HEALTH_PLAN_BENEFICIARY_NUMBER", "1EG4-TE5-MK73"), ("HEALTH_PLAN_BENEFICIARY_NUMBER", "70-1234-5678-9012"),
+         ("MEDICAL_RECORD_NUMBER", "MR771280"), ("WALLET_ID", "WAL15024258"), ("DEVICE_IDENTIFIER", "878021172854510"), ("UTR_NUMBER", "227516580851"), ("UTR_NUMBER", "CBINN01979726392"), ("CARD_EXPIRY", "11/32"),
+         ("DATE", "14-04-1997"), ("AGE", "33"), ("IP_ADDRESS", "213.76.234.20"), ("URL", "https://clinic.com/patient/79671")]
+DROP += [("HEALTH_PLAN_BENEFICIARY_NUMBER", "abcddakjs"), ("HEALTH_PLAN_BENEFICIARY_NUMBER", "ABCDDAKJS"), ("HEALTH_PLAN_BENEFICIARY_NUMBER", "HBP-12"), ("MEDICAL_RECORD_NUMBER", "asdnjkkjnda"), ("WALLET_ID", "qwertyuiop"),
+         ("DEVICE_IDENTIFIER", "asdfghjkl"), ("UTR_NUMBER", "12345"), ("UTR_NUMBER", "asdnjkkjnda"), ("PASSPORT_NUMBER", "abcdefgh"), ("CARD_EXPIRY", "13/45"), ("DATE", "xyzabc"), ("AGE", "abc"), ("IP_ADDRESS", "999.1.1.1"), ("URL", "asdnjkkjnda")]
 for t, v in KEEP:
     k, i, d = run(t, v); assert k and not d, ("should keep", t, v, d)
 for t, v in DROP:
     k, i, d = run(t, v); assert d and not k, ("should drop", t, v, k)
-    if t != "NAME": assert i == [], ("intent should be removed when its last value is dropped", t, v, i)
+    if t not in ("NAME", "DATE"): assert i == [], ("intent should be removed when its last value is dropped", t, v, i)
 k, i, d = P.apply("x", [ent("AADHAAR_NUMBER", "asdnjkkjnda", 0), ent("CARD_NUMBER", "4111 1111 1111 1111", 0)], ["PII", "PCI"]); assert i == ["PCI"] and len(k) == 1   # one family survives
 k, i, d = P.apply("Pooja is nice. aadhar asdnjkkjnda", [ent("NAME", "Pooja", 0), ent("AADHAAR_NUMBER", "asdnjkkjnda", 22)], ["PII"]); assert k == [] and i == []   # NAME closes with the intent
 k, i, d = P.apply("4829 1567 9034이고", [ent("AADHAAR_NUMBER", "4829 1567 9034이고", 0)], ["PII"]); assert k and k[0]["text"] == "4829 1567 9034"   # non-Latin tail trimmed
