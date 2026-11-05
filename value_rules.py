@@ -107,7 +107,7 @@ def v_email(v):
     s = v.strip()
     return bool(re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9._%+\-]{0,62}[A-Za-z0-9_])?@(?:[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,}", s)) and ".." not in s
 def v_upi(v):
-    m = re.fullmatch(r"([A-Za-z0-9._\-]{3,50})@([A-Za-z]+)", v.strip()); return bool(m) and m.group(2).lower() in UPI_HANDLES
+    m = re.fullmatch(r"([A-Za-z0-9._\-]{1,50})@([A-Za-z]+)", v.strip()); return bool(m) and m.group(2).lower() in UPI_HANDLES
 def v_url(v): return bool(re.fullmatch(r"(https?://)?(www\.)?([A-Za-z0-9\-]+\.)+[A-Za-z]{2,}(/\S*)?", v.strip()))
 def v_age(v): return bool(re.fullmatch(r"\d{1,2}", v.strip())) and int(v) >= 1
 

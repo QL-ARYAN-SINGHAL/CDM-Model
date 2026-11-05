@@ -5,7 +5,7 @@ def fam(t): return next((f.upper() for f in ("pii", "phi", "pci") if t in P.FAMI
 def run(t, v): return P.apply("x " + v, [ent(t, v, 2)], [fam(t)])
 KEEP = [("AADHAAR_NUMBER", "2345 6789 0123"), ("AADHAAR_NUMBER", "2345 - 6789 - 0123"), ("AADHAAR_NUMBER", "2345-6789-0123"), ("AADHAAR_NUMBER", "2345\n6789\n0123"), ("AADHAAR_NUMBER", "2345 / 6789 / 0123"),
         ("AADHAAR_NUMBER", "9867 - 5615 - 9216- 1281"), ("CVV", "123"), ("CVV", "4521"), ("PAN_NUMBER", "ABCPD1234E"), ("PAN_NUMBER", "abcpd1234e"), ("PAN_NUMBER", "ABCPD 1234 E"), ("PAN_NUMBER", "ABCPD-1234-E"),
-        ("PHONE", "+91\n99111\n31674"), ("PHONE", "+91 98765 43210"), ("PHONE", "(704) 553-0182"), ("EMAIL", "testing@gmail.com"), ("EMAIL", "priya.k\n@\nexample.com"), ("UPI_ID", "amit@okaxis"), ("CARD_NUMBER", "4111 1111 1111 1111"),
+        ("PHONE", "+91\n99111\n31674"), ("PHONE", "+91 98765 43210"), ("PHONE", "(704) 553-0182"), ("EMAIL", "testing@gmail.com"), ("EMAIL", "priya.k\n@\nexample.com"), ("UPI_ID", "amit@okaxis"), ("UPI_ID", "x@ybl"), ("CARD_NUMBER", "4111 1111 1111 1111"),
         ("CARD_NUMBER", "4532-0151-1283-0366"), ("ACCOUNT_NUMBER", "9876 8762 1231 0876"), ("SSN", "137-56-9781"), ("IFSC_CODE", "HDFC0001234"), ("NAME", "Rahul Sharma")]
 DROP = [("AADHAAR_NUMBER", "asdnjkkjnda"), ("AADHAAR_NUMBER", "83839das"), ("AADHAAR_NUMBER", "2345678901"), ("AADHAAR_NUMBER", "2345 6789 012"), ("AADHAAR_NUMBER", "0123 4567 8901"), ("CVV", "12"), ("CVV", "12345"),
         ("CVV", "12a"), ("PAN_NUMBER", "ABCPD1234EXTRA"), ("PAN_NUMBER", "ABCPD12345"), ("PAN_NUMBER", "asdnjkkjnda"), ("PAN_NUMBER", "ABCDE2132F"), ("PHONE", "asdnjkkjnda"), ("PHONE", "98765abcde"), ("EMAIL", "asdnjkkjnda"),
